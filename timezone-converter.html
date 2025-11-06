@@ -1,0 +1,270 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>全球时区转换工具（实时联动版）</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; }
+        body { background: linear-gradient(135deg, #38b2ac 0%, #4299e1 100%); min-height: 100vh; padding: 20px; display: flex; align-items: center; justify-content: center; }
+        .container { max-width: 650px; width: 100%; background: white; padding: 35px; border-radius: 12px; box-shadow: 0 8px 32px rgba(0,0,0,0.15); }
+        h1 { text-align: center; color: #2d3748; margin-bottom: 30px; font-size: 26px; font-weight: 600; }
+        .timezone-group { display: flex; align-items: center; gap: 12px; margin-bottom: 25px; flex-wrap: wrap; }
+        select, input[type="datetime-local"] { flex: 1; padding: 14px 16px; border: 1px solid #e2e8f0; border-radius: 8px; font-size: 16px; transition: all 0.3s ease; }
+        select:focus, input[type="datetime-local"]:focus { outline: none; border-color: #4299e1; box-shadow: 0 0 0 3px rgba(66, 153, 225, 0.1); }
+        .swap-btn { padding: 14px 18px; background: #4299e1; color: white; border: none; border-radius: 8px; cursor: pointer; font-size: 18px; transition: background 0.3s ease; }
+        .swap-btn:hover { background: #3182ce; }
+        .auto-update { display: flex; align-items: center; gap: 10px; margin-bottom: 25px; justify-content: center; }
+        .auto-update input { width: auto; flex: none; }
+        .auto-update label { color: #4a5568; font-size: 14px; }
+        .result-container { display: flex; gap: 20px; margin-bottom: 25px; flex-wrap: wrap; }
+        .time-card { flex: 1; min-width: 200px; padding: 20px; background: #f8f9fa; border-radius: 8px; border: 1px solid #e2e8f0; text-align: center; position: relative; transition: all 0.3s ease; }
+        .time-card:hover { transform: translateY(-5px); box-shadow: 0 4px 12px rgba(0,0,0,0.08); }
+        .time-card h3 { color: #718096; font-size: 16px; margin-bottom: 10px; font-weight: 500; }
+        .time-card .time { color: #2d3748; font-size: 28px; font-weight: 600; }
+        .time-card .date { color: #4a5568; font-size: 14px; margin-top: 5px; }
+        .dst-badge { position: absolute; top: 10px; right: 10px; padding: 4px 8px; background: #ed8936; color: white; border-radius: 4px; font-size: 12px; font-weight: 500; }
+        .note { text-align: center; color: #718096; font-size: 14px; line-height: 1.6; }
+
+        @media (max-width: 480px) {
+            .timezone-group { flex-direction: column; gap: 15px; }
+            select, input[type="datetime-local"] { width: 100%; }
+            .swap-btn { width: 100%; }
+            .result-container { flex-direction: column; }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>全球时区转换工具</h1>
+        
+        <div class="timezone-group">
+            <select id="sourceTimezone">
+                <option value="Asia/Shanghai">中国标准时间 (UTC+8)</option>
+                <option value="America/New_York">美国东部时间 (UTC-4/-5)</option>
+                <option value="Europe/London">英国伦敦时间 (UTC+0/-1)</option>
+                <option value="Europe/Paris">欧洲中部时间 (UTC+1/+2)</option>
+                <option value="Asia/Tokyo">日本东京时间 (UTC+9)</option>
+                <option value="Australia/Sydney">澳大利亚悉尼时间 (UTC+10/+11)</option>
+                <option value="America/Los_Angeles">美国西部时间 (UTC-7/-8)</option>
+                <option value="Asia/Hong_Kong">中国香港时间 (UTC+8)</option>
+                <option value="Asia/Singapore">新加坡时间 (UTC+8)</option>
+                <option value="Africa/Johannesburg">南非约翰内斯堡时间 (UTC+2)</option>
+                <option value="America/Chicago">美国中部时间 (UTC-5/-6)</option>
+                <option value="America/Toronto">加拿大多伦多时间 (UTC-4/-5)</option>
+                <option value="Europe/Berlin">德国柏林时间 (UTC+1/+2)</option>
+                <option value="Europe/Madrid">西班牙马德里时间 (UTC+1/+2)</option>
+                <option value="Asia/Dubai">阿联酋迪拜时间 (UTC+4)</option>
+                <option value="Asia/Bangkok">泰国曼谷时间 (UTC+7)</option>
+                <option value="Oceania/Auckland">新西兰奥克兰时间 (UTC+12/+13)</option>
+                <option value="Europe/Moscow">俄罗斯莫斯科时间 (UTC+3)</option>
+                <option value="India/Kolkata">印度加尔各答时间 (UTC+5:30)</option>
+                <option value="Brazil/Sao_Paulo">巴西圣保罗时间 (UTC-3/-2)</option>
+                <option value="Africa/Cairo">埃及开罗时间 (UTC+2)</option>
+                <option value="Asia/Seoul">韩国首尔时间 (UTC+9)</option>
+                <option value="Europe/Rome">意大利罗马时间 (UTC+1/+2)</option>
+                <option value="America/Mexico_City">墨西哥墨西哥城时间 (UTC-6/-5)</option>
+                <option value="Asia/Taipei">中国台北时间 (UTC+8)</option>
+            </select>
+            <button class="swap-btn" id="swapBtn"↔️</button>
+            <select id="targetTimezone">
+                <option value="America/New_York">美国东部时间 (UTC-4/-5)</option>
+                <option value="Asia/Shanghai">中国标准时间 (UTC+8)</option>
+                <option value="Europe/London">英国伦敦时间 (UTC+0/-1)</option>
+                <option value="Europe/Paris">欧洲中部时间 (UTC+1/+2)</option>
+                <option value="Asia/Tokyo">日本东京时间 (UTC+9)</option>
+                <option value="Australia/Sydney">澳大利亚悉尼时间 (UTC+10/+11)</option>
+                <option value="America/Los_Angeles">美国西部时间 (UTC-7/-8)</option>
+                <option value="Asia/Hong_Kong">中国香港时间 (UTC+8)</option>
+                <option value="Asia/Singapore">新加坡时间 (UTC+8)</option>
+                <option value="Africa/Johannesburg">南非约翰内斯堡时间 (UTC+2)</option>
+                <option value="America/Chicago">美国中部时间 (UTC-5/-6)</option>
+                <option value="America/Toronto">加拿大多伦多时间 (UTC-4/-5)</option>
+                <option value="Europe/Berlin">德国柏林时间 (UTC+1/+2)</option>
+                <option value="Europe/Madrid">西班牙马德里时间 (UTC+1/+2)</option>
+                <option value="Asia/Dubai">阿联酋迪拜时间 (UTC+4)</option>
+                <option value="Asia/Bangkok">泰国曼谷时间 (UTC+7)</option>
+                <option value="Oceania/Auckland">新西兰奥克兰时间 (UTC+12/+13)</option>
+                <option value="Europe/Moscow">俄罗斯莫斯科时间 (UTC+3)</option>
+                <option value="India/Kolkata">印度加尔各答时间 (UTC+5:30)</option>
+                <option value="Brazil/Sao_Paulo">巴西圣保罗时间 (UTC-3/-2)</option>
+                <option value="Africa/Cairo">埃及开罗时间 (UTC+2)</option>
+                <option value="Asia/Seoul">韩国首尔时间 (UTC+9)</option>
+                <option value="Europe/Rome">意大利罗马时间 (UTC+1/+2)</option>
+                <option value="America/Mexico_City">墨西哥墨西哥城时间 (UTC-6/-5)</option>
+                <option value="Asia/Taipei">中国台北时间 (UTC+8)</option>
+            </select>
+        </div>
+
+        <div class="timezone-group">
+            <input type="datetime-local" id="sourceDatetime" value="">
+        </div>
+
+        <div class="auto-update">
+            <input type="checkbox" id="autoUpdate" checked>
+            <label for="autoUpdate">自动实时更新（每秒同步系统时间）</label>
+        </div>
+
+        <div class="result-container">
+            <div class="time-card">
+                <h3 id="sourceTimezoneName">中国标准时间 (UTC+8)</h3>
+                <div class="time" id="sourceTime">--:--:--</div>
+                <div class="date" id="sourceDate">----年--月--日</div>
+                <div id="sourceDstBadge" class="dst-badge" style="display: none;">夏令时</div>
+            </div>
+            <div class="time-card">
+                <h3 id="targetTimezoneName">美国东部时间 (UTC-4/-5)</h3>
+                <div class="time" id="targetTime">--:--:--</div>
+                <div class="date" id="targetDate">----年--月--日</div>
+                <div id="targetDstBadge" class="dst-badge" style="display: none;">夏令时</div>
+            </div>
+        </div>
+
+        <div class="note">
+            提示：基于电脑系统时区数据库 | 自动识别夏令时 | 勾选自动更新后，两个时间卡片实时联动变动 | 无需要手动点击转换
+        </div>
+    </div>
+
+    <script>
+        // 元素获取
+        const sourceTimezone = document.getElementById('sourceTimezone');
+        const targetTimezone = document.getElementById('targetTimezone');
+        const sourceDatetime = document.getElementById('sourceDatetime');
+        const autoUpdate = document.getElementById('autoUpdate');
+        const sourceTimezoneName = document.getElementById('sourceTimezoneName');
+        const targetTimezoneName = document.getElementById('targetTimezoneName');
+        const sourceTime = document.getElementById('sourceTime');
+        const targetTime = document.getElementById('targetTime');
+        const sourceDate = document.getElementById('sourceDate');
+        const targetDate = document.getElementById('targetDate');
+        const sourceDstBadge = document.getElementById('sourceDstBadge');
+        const targetDstBadge = document.getElementById('targetDstBadge');
+        const swapBtn = document.getElementById('swapBtn');
+
+        let autoUpdateInterval; // 自动更新定时器
+
+        // 初始化：设置默认时间+启动自动更新+绑定联动事件
+        function init() {
+            updateCurrentDatetime(); // 初始化当前时间
+            updateTimezoneNames(); // 初始化时区名称
+            convertTimezone(); // 首次转换
+            startAutoUpdate(); // 启动自动更新
+
+            // 绑定联动事件：切换时区/修改输入时间时，实时转换
+            sourceTimezone.addEventListener('change', () => {
+                updateTimezoneNames();
+                convertTimezone();
+            });
+            targetTimezone.addEventListener('change', () => {
+                updateTimezoneNames();
+                convertTimezone();
+            });
+            sourceDatetime.addEventListener('input', convertTimezone);
+            autoUpdate.addEventListener('change', startAutoUpdate);
+            swapBtn.addEventListener('click', swapTimezones);
+        }
+
+        // 更新输入框的当前系统时间
+        function updateCurrentDatetime() {
+            const now = new Date();
+            const formattedDatetime = now.toISOString().slice(0, 16);
+            sourceDatetime.value = formattedDatetime;
+        }
+
+        // 更新时区名称显示
+        function updateTimezoneNames() {
+            sourceTimezoneName.textContent = sourceTimezone.options[sourceTimezone.selectedIndex].text;
+            targetTimezoneName.textContent = targetTimezone.options[targetTimezone.selectedIndex].text;
+        }
+
+        // 检查是否为夏令时（基于系统时区数据）
+        function isDaylightSavingTime(dateObj, timezone) {
+            // 利用浏览器原生时区处理能力，对比1月和当前月份的偏移量
+            const janOffset = new Date(dateObj.getFullYear(), 0, 1).toLocaleString('en-US', {
+                timeZone: timezone,
+                timeZoneName: 'shortOffset'
+            }).match(/[+-]\d+/)[0];
+            const currentOffset = dateObj.toLocaleString('en-US', {
+                timeZone: timezone,
+                timeZoneName: 'shortOffset'
+            }).match(/[+-]\d+/)[0];
+            return janOffset !== currentOffset;
+        }
+
+        // 核心转换逻辑（纯系统时区数据，无第三方依赖）
+        function convertTimezone() {
+            const sourceTz = sourceTimezone.value;
+            const targetTz = targetTimezone.value;
+            const inputDatetime = sourceDatetime.value;
+
+            if (!inputDatetime) return;
+
+            // 解析输入时间为Date对象（系统原生处理）
+            const sourceDateObj = new Date(inputDatetime);
+            if (isNaN(sourceDateObj.getTime())) return;
+
+            // 处理源时区数据（时间+日期+夏令时）
+            const sourceFormatted = formatDatetime(sourceDateObj, sourceTz);
+            const sourceDst = isDaylightSavingTime(sourceDateObj, sourceTz);
+            sourceTime.textContent = sourceFormatted.time;
+            sourceDate.textContent = sourceFormatted.date;
+            sourceDstBadge.style.display = sourceDst ? 'block' : 'none';
+
+            // 处理目标时区数据（系统自动转换时区）
+            const targetDateStr = sourceDateObj.toLocaleString('en-US', { timeZone: targetTz });
+            const targetDateObj = new Date(targetDateStr);
+            const targetFormatted = formatDatetime(targetDateObj, targetTz);
+            const targetDst = isDaylightSavingTime(targetDateObj, targetTz);
+            targetTime.textContent = targetFormatted.time;
+            targetDate.textContent = targetFormatted.date;
+            targetDstBadge.style.display = targetDst ? 'block' : 'none';
+        }
+
+        // 格式化日期时间（24小时制，中文显示）
+        function formatDatetime(dateObj, timezone) {
+            const optionsDate = {
+                year: 'numeric',
+                month: 'long',
+                day: 'numeric',
+                weekday: 'long',
+                timeZone: timezone
+            };
+            const optionsTime = {
+                hour: '2-digit',
+                minute: '2-digit',
+                second: '2-digit',
+                hour12: false,
+                timeZone: timezone
+            };
+
+            const dateStr = dateObj.toLocaleString('zh-CN', optionsDate);
+            const timeStr = dateObj.toLocaleString('zh-CN', optionsTime);
+            return { date: dateStr, time: timeStr };
+        }
+
+        // 互换时区（实时联动转换）
+        function swapTimezones() {
+            const temp = sourceTimezone.value;
+            sourceTimezone.value = targetTimezone.value;
+            targetTimezone.value = temp;
+            updateTimezoneNames();
+            convertTimezone();
+        }
+
+        // 启动/停止自动更新
+        function startAutoUpdate() {
+            clearInterval(autoUpdateInterval); // 清除现有定时器
+            if (autoUpdate.checked) {
+                // 每秒更新一次系统时间，并触发转换（两个卡片实时联动）
+                autoUpdateInterval = setInterval(() => {
+                    updateCurrentDatetime();
+                    convertTimezone();
+                }, 1000);
+            }
+        }
+
+        // 页面加载完成后初始化
+        window.onload = init;
+    </script>
+</body>
+</html>
